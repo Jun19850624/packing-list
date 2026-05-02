@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>荷物リスト</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #f5f0e8;
+    --paper: #fdfaf4;
+    --ink: #2a2118;
+    --ink-light: #7a6e61;
+    --accent: #c84b2f;
+    --rule: #e0d8cc;
+    --check-done: #b5c9a0;
+    --shadow: rgba(42,33,24,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+    color: var(--ink);
+  }
+
+  h1 {
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    letter-spacing: .08em;
+    text-align: center;
+    margin-bottom: 28px;
+    color: var(--ink);
+  }
+  h1 span {
+    display: inline-block;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 4px;
+  }
+
+  .section {
+    background: var(--paper);
+    border-radius: 4px;
+    box-shadow: 0 2px 12px var(--shadow), 0 1px 3px var(--shadow);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    background: var(--ink);
+    color: #fff;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 700;
+    font-size: .85rem;
+    letter-spacing: .15em;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-header .icon { font-size: 1rem; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    border-bottom: 2px solid var(--rule);
+  }
+  thead th {
+    font-size: .7rem;
+    font-weight: 500;
+    color: var(--ink-light);
+    letter-spacing: .1em;
+    padding: 8px 12px 6px;
+    text-align: left;
+  }
+  th.col-qty { text-align: center; width: 64px; }
+  th.col-check { text-align: center; width: 52px; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--rule);
+    transition: background .15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(200,75,47,.03); }
+  tbody tr.checked {
+    background: rgba(181,201,160,.12);
+  }
+  tbody tr.checked td.col-name {
+    color: var(--ink-light);
+    text-decoration: line-through;
+    text-decoration-color: var(--check-done);
+  }
+
+  td {
+    padding: 9px 12px;
+    font-size: .9rem;
+  }
+  td.col-qty {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-size: .88rem;
+    color: var(--ink-light);
+  }
+  td.col-qty input {
+    width: 44px;
+    text-align: center;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: transparent;
+    font-family: inherit;
+    font-size: .85rem;
+    color: var(--ink);
+    padding: 2px 4px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  td.col-qty input:focus { border-color: var(--accent); }
+  td.col-qty input::placeholder { color: #ccc; }
+
+  td.col-check {
+    text-align: center;
+  }
+  td.col-check input[type=checkbox] {
+    width: 18px; height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 10px;
+    border-top: 1px dashed var(--rule);
+  }
+  .add-row input[type=text] {
+    flex: 1;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: .85rem;
+    color: var(--ink);
+    padding: 4px 2px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .add-row input[type=text]:focus { border-color: var(--accent); }
+  .add-row input[type=text]::placeholder { color: #bbb; font-size: .8rem; }
+  .add-row button {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: .75rem;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 700;
+    letter-spacing: .08em;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity .2s;
+  }
+  .add-row button:hover { opacity: .85; }
+
+  .progress-bar-wrap {
+    height: 3px;
+    background: var(--rule);
+    border-radius: 0 0 4px 4px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--check-done);
+    transition: width .4s ease;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .footer-note {
+    text-align: center;
+    font-size: .72rem;
+    color: var(--ink-light);
+    margin-top: 8px;
+    letter-spacing: .05em;
+  }
+
+  /* delete button */
+  .del-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: .85rem;
+    padding: 0 4px;
+    line-height: 1;
+    transition: color .15s;
+  }
+  .del-btn:hover { color: var(--accent); }
+
+  /* toolbar */
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .toolbar button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1.5px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-weight: 700;
+    font-size: .78rem;
+    letter-spacing: .08em;
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .toolbar button:hover { background: var(--ink); color: #fff; }
+  .toolbar button.import-btn { border-color: var(--accent); color: var(--accent); }
+  .toolbar button.import-btn:hover { background: var(--accent); color: #fff; }
+
+  /* toast */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: #fff;
+    font-size: .8rem;
+    padding: 8px 18px;
+    border-radius: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s, transform .3s;
+    white-space: nowrap;
+    z-index: 999;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<h1><span>📦 荷物リスト</span></h1>
+
+<div class="toolbar">
+  <button onclick="exportJSON()">💾 保存（JSONエクスポート）</button>
+  <button class="import-btn" onclick="document.getElementById('importFile').click()">📂 読み込み（インポート）</button>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)" />
+</div>
+
+<div id="app"></div>
+<p class="footer-note">チェックで完了 ／ 個数欄は空白＝未定 ／ 保存ボタンでJSONファイルに書き出し</p>
+<div id="toast"></div>
+
+<script>
+const INITIAL = [
+  {
+    id: 'living',
+    label: '1. リビング',
+    icon: '🛋',
+    items: [
+      { name: '玄関マット', qty: '1' },
+      { name: 'スリッパ', qty: '1' },
+      { name: '電源コード　type-C', qty: '' },
+      { name: '電源コード　type-B', qty: '' },
+      { name: 'コンセント', qty: '' },
+    ]
+  },
+  {
+    id: 'kitchen',
+    label: '2. キッチン',
+    icon: '🍳',
+    items: [
+      { name: 'キッチン洗剤', qty: '' },
+      { name: 'キッチン洗剤 容器', qty: '1' },
+    ]
+  }
+];
+
+// Load state
+function loadState() {
+  try {
+    const s = localStorage.getItem('packingList2');
+    return s ? JSON.parse(s) : null;
+  } catch(e) { return null; }
+}
+function saveState(sections) {
+  try { localStorage.setItem('packingList2', JSON.stringify(sections)); } catch(e) {}
+}
+
+let sections = loadState() || INITIAL.map(s => ({
+  ...s,
+  items: s.items.map(it => ({ ...it, checked: false }))
+}));
+
+function render() {
+  saveState(sections);
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  sections.forEach((sec, si) => {
+    const total = sec.items.length;
+    const done = sec.items.filter(i => i.checked).length;
+    const pct = total ? Math.round(done/total*100) : 0;
+
+    const div = document.createElement('div');
+    div.className = 'section';
+    div.innerHTML = `
+      <div class="section-header">
+        <span class="icon">${sec.icon}</span>
+        <span>${sec.label}</span>
+        <span style="margin-left:auto;font-size:.75rem;opacity:.7">${done}/${total}</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>品名</th>
+            <th class="col-qty">個数</th>
+            <th class="col-check">チェック</th>
+            <th style="width:28px"></th>
+          </tr>
+        </thead>
+        <tbody id="tbody-${si}"></tbody>
+      </table>
+      <div class="add-row">
+        <input type="text" id="new-${si}" placeholder="品名を追加…" />
+        <button onclick="addItem(${si})">＋ 追加</button>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:${pct}%"></div>
+      </div>
+    `;
+    app.appendChild(div);
+
+    const tbody = div.querySelector(`#tbody-${si}`);
+    sec.items.forEach((item, ii) => {
+      const tr = document.createElement('tr');
+      if(item.checked) tr.classList.add('checked');
+      tr.innerHTML = `
+        <td class="col-name">${escHtml(item.name)}</td>
+        <td class="col-qty">
+          <input type="text" inputmode="numeric" value="${escHtml(item.qty)}"
+            placeholder="—"
+            onchange="updateQty(${si},${ii},this.value)" />
+        </td>
+        <td class="col-check">
+          <input type="checkbox" ${item.checked?'checked':''} onchange="toggleCheck(${si},${ii},this.checked)" />
+        </td>
+        <td><button class="del-btn" onclick="delItem(${si},${ii})" title="削除">✕</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Enter key on add input
+    const inp = div.querySelector(`#new-${si}`);
+    inp.addEventListener('keydown', e => { if(e.key==='Enter') addItem(si); });
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleCheck(si, ii, val) {
+  sections[si].items[ii].checked = val;
+  render();
+}
+function updateQty(si, ii, val) {
+  sections[si].items[ii].qty = val.trim();
+  saveState(sections);
+}
+function addItem(si) {
+  const inp = document.getElementById(`new-${si}`);
+  const name = inp.value.trim();
+  if(!name) return;
+  sections[si].items.push({ name, qty: '', checked: false });
+  inp.value = '';
+  render();
+  // Re-focus
+  setTimeout(()=>{ const el=document.getElementById(`new-${si}`); if(el) el.focus(); },50);
+}
+function delItem(si, ii) {
+  sections[si].items.splice(ii,1);
+  render();
+}
+
+// --- Export ---
+function exportJSON() {
+  const json = JSON.stringify(sections, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  a.href = url;
+  a.download = `packing-list-${stamp}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 JSONファイルを保存しました');
+}
+
+// --- Import ---
+function importJSON(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) throw new Error('invalid');
+      sections = data;
+      render();
+      showToast('📂 データを読み込みました');
+    } catch(err) {
+      showToast('⚠️ 読み込みに失敗しました');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// --- Toast ---
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+render();
+</script>
+</body>
+</html>
